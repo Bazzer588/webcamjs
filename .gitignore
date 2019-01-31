@@ -1,0 +1,8 @@
+.idea/
+.project
+.actionScriptProperties
+.flexProperties
+/flash/html-template/
+/flash/bin-debug/
+/flash/.settings/
+/flash/src/WC.mxml

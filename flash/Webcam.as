@@ -40,6 +40,7 @@
 		private var image_format:String;
 		private var fps:int;
 		private var flip_horiz:Boolean;
+		private var auto_size:Boolean;
 		
 		public function Webcam() {
 			// class constructor
@@ -54,6 +55,7 @@
 			image_format = flashvars.image_format;
 			fps = Math.floor( flashvars.fps );
 			flip_horiz = flashvars.flip_horiz == "true";
+			auto_size = flashvars.auto_size == "true";
 			
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			// stage.scaleMode = StageScaleMode.EXACT_FIT; // Note: This breaks HD capture
@@ -70,10 +72,16 @@
 			// From: http://www.squidder.com/2009/03/09/trick-auto-select-mac-isight-in-flash/
 			var cameraIdx:int = -1;
 			for (var idx = 0, len = Camera.names.length; idx < len; idx++) {
-				if (Camera.names[idx] == "USB Video Class Video") {
+				if (Camera.names[idx] == flashvars.cameraName) {
 					cameraIdx = idx;
 					idx = len;
-				}
+				} else if (idx == flashvars.cameraIndex) {
+					cameraIdx = idx;
+					idx = len;
+				} /*else if (Camera.names[idx] == "Microsoft® LifeCam HD-3000") {
+					cameraIdx = idx;
+					idx = len;
+				}*/
 			}
 			if (cameraIdx > -1) camera = Camera.getCamera( String(cameraIdx) );
 			else camera = Camera.getCamera();
@@ -97,7 +105,11 @@
 				
 				camera.setQuality(0, 100);
 				camera.setKeyFrameInterval(10);
-				camera.setMode( Math.max(video_width, dest_width), Math.max(video_height, dest_height), fps );
+				if (auto_size) {
+					camera.setMode( 64000, 48000, fps );
+				} else {
+					camera.setMode( Math.max(video_width, dest_width), Math.max(video_height, dest_height), fps );
+				}
 				
 				// only detect motion once, to determine when camera is "live"
 				camera.setMotionLevel( 1 );
@@ -105,6 +117,7 @@
 				ExternalInterface.addCallback('_snap', snap);
 				ExternalInterface.addCallback('_configure', configure);
 				ExternalInterface.addCallback('_releaseCamera', releaseCamera);
+				ExternalInterface.addCallback('_getCameras', getCameras);
 								
 				ExternalInterface.call('Webcam.flashNotify', 'flashLoadComplete', true);
 			}
@@ -121,7 +134,15 @@
 
 		private function activityHandler(event:ActivityEvent):void {
 			trace("activityHandler: " + event);
-			ExternalInterface.call('Webcam.flashNotify', 'cameraLive', true);
+			ExternalInterface.call('Webcam.flashNotify', 'cameraLive', true, camera.width, camera.height, camera.name);
+			
+			if (auto_size && (video_width != camera.width || video_height != camera.height)) {
+				video_width = camera.width;
+				video_height = camera.height;
+				dest_width = camera.width;
+				dest_height = camera.height;
+				//camera.setMode(dest_width,dest_height,fps);
+			}
 			
 			// now disable motion detection (may help reduce CPU usage)
 			camera.setMotionLevel( 100 );
@@ -193,5 +214,10 @@
 			removeChild(video);
 
 		}
+		
+		public function getCameras() {
+			return Camera.names;
+		}
+		
 	}
 }

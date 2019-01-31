@@ -664,7 +664,9 @@ var Webcam = {
 			if (flashvars) flashvars += '&';
 			flashvars += key + '=' + escape(this.params[key]);
 		}
-		
+
+		console.log(flashvars);
+
 		// construct object/embed tag
 		html += '<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" type="application/x-shockwave-flash" codebase="'+this.protocol+'://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" width="'+this.params.width+'" height="'+this.params.height+'" id="webcam_movie_obj" align="middle"><param name="wmode" value="opaque" /><param name="allowScriptAccess" value="always" /><param name="allowFullScreen" value="false" /><param name="movie" value="'+swfURL+'" /><param name="loop" value="false" /><param name="menu" value="false" /><param name="quality" value="best" /><param name="bgcolor" value="#ffffff" /><param name="flashvars" value="'+flashvars+'"/><embed id="webcam_movie_embed" src="'+swfURL+'" wmode="opaque" loop="false" menu="false" quality="best" bgcolor="#ffffff" width="'+this.params.width+'" height="'+this.params.height+'" name="webcam_movie_embed" align="middle" allowScriptAccess="always" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" flashvars="'+flashvars+'"></embed></object>';
 		
@@ -933,7 +935,7 @@ var Webcam = {
 		this.getMovie()._configure(panel);
 	},
 	
-	flashNotify: function(type, msg) {
+	flashNotify: function(type, msg, w, h, name) {
 		// receive notification from flash about event
 		switch (type) {
 			case 'flashLoadComplete':
@@ -944,6 +946,7 @@ var Webcam = {
 			
 			case 'cameraLive':
 				// camera is live and ready to snap
+				console.log('cameraLive',w,h,name);
 				this.live = true;
 				this.dispatch('live');
 				break;
@@ -1033,6 +1036,18 @@ var Webcam = {
 		
 		// send data to server
 		http.send(form);
+	},
+
+	getCameras: function () {
+        //if ((this.userMedia !== true) && this.loaded && !this.iOS) {
+            // call for turn off camera in flash
+            var movie = this.getMovie();
+        //console.log('GC',movie,movie._snap,movie.getCameras);
+            if (movie && movie._getCameras) {
+            	var x = movie._getCameras();
+            	console.log('RES',x);
+            }
+        //}
 	}
 	
 };
